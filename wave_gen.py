@@ -218,7 +218,7 @@ def wave_on_sensor(cortex,G,PARAMS):
     return sensor_waves, strt, nn
 
 
-def blob_on_sensor(cortex,  G, strt, nn, PARAMS):
+def blob_on_sensor(cortex,  G, PARAMS, strt, nn):
     vertices = cortex['Vertices']
     VertConn = cortex['VertConn']
     speed = PARAMS['speed']
@@ -427,8 +427,8 @@ def generate_wave(G3_data,cortex_data):
     G3 ,cortex = get_data(G3_data,cortex_data)
     G = gain_orient(G3)
     for i in tqdm(range(Nsim), desc='Synthesizing data'):
-        wave, strt, nn = wave_on_sensor(cortex, params, G)
-        blob = blob_on_sensor(cortex, params, G, strt, nn)
+        wave, strt, nn = wave_on_sensor(cortex,  G, params,)
+        blob = blob_on_sensor(cortex, G, params,  strt, nn)
         noise = generate_brain_noise(G,1000,T,Fs)
         noise_norm = noise/np.linalg.norm(noise)
 
