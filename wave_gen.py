@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 from tqdm import tqdm
+import scipy
 import scipy.sparse as sp
 from scipy.signal import butter, filtfilt
 import warnings
 
 seed = None
-rng = np.random.default_rng(seed=seed) # random Generator with seed
+rng = np.random.default_rng(seed=seed)  # random Generator with seed
 Fs = 1e3
 N_comps = 6
 Nhigh = 3
@@ -35,23 +36,24 @@ params = {
     'draw_wave': False,
 }
 
-def get_data(G_data,cortex_data):
+
+def get_data(G_data, cortex_data):
     """
     Upload your data from matlab as Path to file
     """
-    G3 = scipy.io.loadmat(G_data)
+    G = scipy.io.loadmat(G_data)
     cortex = scipy.io.loadmat(cortex_data)
-    return G3,cortex
+    return G, cortex
 
 def gain_orient(G3, channel_idx=channel_idx):
-    Gain = G3['Gain'][channel_idx, :]
+    Gain = G3['Gain'][channel_idx]
     # Create a sparse block diagonal matrix for orientations
     GridOrient = sp.block_diag(np.hsplit(G3['GridOrient'].T,G3['GridOrient'].shape[0]))
     # Apply the orientation to the Gain matrix
     Gain = Gain @ GridOrient
-    return Gain   
+    return Gain
 
-def wave_on_sensor(cortex,G,PARAMS=params):
+def wave_on_sensor(cortex,G,PARAMS):
     strt = rng.integers(0, G.shape[1])
     vertices = cortex['Vertices']
     VertConn = cortex['VertConn']
@@ -191,7 +193,7 @@ def wave_on_sensor(cortex,G,PARAMS=params):
 
 
     if PARAMS['draw_paths'] == 1:
-        fig = px.scatter_3d(vertices, x=0, y=1, z=2, width=800, height=600,opacity=0.00099) #to improve speed performance - reduce number of vertices
+        fig = px.scatter_3d(vertices, x=0, y=1, z=2, width=800, height=600, opacity=0.00099) #to improve speed performance - reduce number of vertices
 
         # Add scatter plot for 'Vertices'
         fig.add_trace(go.Scatter3d(x=vertices[IND, 0], y=vertices[IND, 1], z=vertices[IND, 2], mode='markers', name='Vertices',opacity=0.8))
@@ -209,14 +211,14 @@ def wave_on_sensor(cortex,G,PARAMS=params):
 
     if  PARAMS['draw_wave']:
         plt.figure()
-        plt.plot(np.arange(wave.shape[1]),wave[:,:])
+        plt.plot(np.arange(wave.shape[1]), wave[:,:])
 
-    sensor_waves = np.tensordot(FM,wave.T,axes=1)
+    sensor_waves = np.tensordot(FM, wave.T, axes=1)
 
     return sensor_waves, strt, nn
 
 
-def blob_on_sensor(cortex, PARAMS=params, G, strt, nn):
+def blob_on_sensor(cortex,  G, strt, nn, PARAMS):
     vertices = cortex['Vertices']
     VertConn = cortex['VertConn']
     speed = PARAMS['speed']
@@ -241,7 +243,7 @@ def blob_on_sensor(cortex, PARAMS=params, G, strt, nn):
 
     third_vector = np.cross(dr0, norm0)
     third_vector /= np.linalg.norm(third_vector)
-    abc = np.dot(np.outer(third_vector, vertices[strt]), third_vector)  #######
+    abc = np.dot(np.outer(third_vector, vertices[strt]), third_vector) 
     Ptpon = np.eye(3) - np.outer(third_vector, third_vector)
 
     d = 3
@@ -418,21 +420,21 @@ def generate_brain_noise(G, N, T, Fs):
 
     return brain_noise
 
-def generate_wave(G3_data,cortex_data, params,Nsim):
+
+def generate_wave(G3_data,cortex_data, params, Nsim):
     warnings.filterwarnings("ignore")
     waves = np.zeros((Nsim * 2, channel_idx.shape[0], T))
     G3 ,cortex = get_data(cortex_data,G3_data)
     G = gain_orient(G3)
-    for i in tqdm(range(Nsim),desc='Synthesizing data'):
-        wave, strt, nn = wave_on_sensor(cortex=cortex, params=params, G=G)
-        blob = blob_on_sensor(cortex=cortex, params=params, G=G, strt=strt, nn=nn)
-        noise = generate_brain_noise(G=G,1000,T=T,Fs=Fs)
+    for i in tqdm(range(Nsim), desc='Synthesizing data'):
+        wave, strt, nn = wave_on_sensor(cortex, params, G)
+        blob = blob_on_sensor(cortex, params, G, strt, nn)
+        noise = generate_brain_noise(G,1000,T,Fs)
         noise_norm = noise/np.linalg.norm(noise)
 
         waves[i] = SNR*(wave/np.linalg.norm(wave)) + noise_norm
         waves[i+Nsim] = SNR*(blob/np.linalg.norm(blob)) + noise_norm
     return waves
-
 
 
 
