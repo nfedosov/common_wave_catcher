@@ -421,7 +421,7 @@ def generate_brain_noise(G, N, T, Fs):
     return brain_noise
 
 
-def generate_wave(G3_data,cortex_data, params, Nsim):
+def generate_wave(G3_data,cortex_data):
     warnings.filterwarnings("ignore")
     waves = np.zeros((Nsim * 2, channel_idx.shape[0], T))
     G3 ,cortex = get_data(cortex_data,G3_data)
