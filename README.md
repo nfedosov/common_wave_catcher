@@ -1,1 +1,1 @@
-Here's the colab notebook with an example of usage: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]((https://colab.research.google.com/github/nfedosov/common_wave_catcher/blob/main/WaveCatcher_lib.ipynb)https://colab.research.google.com/github/nfedosov/common_wave_catcher/blob/main/WaveCatcher_lib.ipynb)
+Here's the colab notebook with an example of usage: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/nfedosov/common_wave_catcher/blob/main/WaveCatcher_lib.ipynb)
