@@ -7,9 +7,10 @@ import scipy.sparse as sp
 from scipy.signal import butter, filtfilt
 import warnings
 
-rng = np.random.default_rng(seed=0) # random Generator with seed
+seed = None
+rng = np.random.default_rng(seed=seed) # random Generator with seed
 Fs = 1e3
-N_comps = 2
+N_comps = 6
 Nhigh = 3
 Nlow = 1
 DoWhitening = False
@@ -34,18 +35,24 @@ params = {
     'draw_wave': False,
 }
 
+def get_data(G_data,cortex_data):
+    """
+    Upload your data from matlab as Path to file
+    """
+    G3 = scipy.io.loadmat(G_data)
+    cortex = scipy.io.loadmat(cortex_data)
+    return G3,cortex
 
-def gain_orient(G3, channel_idx):
+def gain_orient(G3, channel_idx=channel_idx):
     Gain = G3['Gain'][channel_idx, :]
     # Create a sparse block diagonal matrix for orientations
     GridOrient = sp.block_diag(np.hsplit(G3['GridOrient'].T,G3['GridOrient'].shape[0]))
     # Apply the orientation to the Gain matrix
     Gain = Gain @ GridOrient
-    return Gain
+    return Gain   
 
-def wave_on_sensor(cortex, PARAMS, G):
+def wave_on_sensor(cortex,G,PARAMS=params):
     strt = rng.integers(0, G.shape[1])
-
     vertices = cortex['Vertices']
     VertConn = cortex['VertConn']
     speed = PARAMS['speed']
@@ -57,10 +64,8 @@ def wave_on_sensor(cortex, PARAMS, G):
     max_step = 151
     num_dir = len(indn)
 
-    nn = rng.integers(num_dir) ###########  0
-
+    nn = rng.integers(num_dir)
     IND = np.zeros(max_step, dtype=int)
-
     IND[0] = strt
     ind0 = indn[nn]
     IND[1] = ind0
@@ -211,7 +216,7 @@ def wave_on_sensor(cortex, PARAMS, G):
     return sensor_waves, strt, nn
 
 
-def blob_on_sensor(cortex, PARAMS, G, strt, nn):
+def blob_on_sensor(cortex, PARAMS=params, G, strt, nn):
     vertices = cortex['Vertices']
     VertConn = cortex['VertConn']
     speed = PARAMS['speed']
@@ -413,17 +418,21 @@ def generate_brain_noise(G, N, T, Fs):
 
     return brain_noise
 
-def generate_wave(mat2, params, G,Nsim):
+def generate_wave(G3_data,cortex_data, params=params,Nsim=Nsim):
     warnings.filterwarnings("ignore")
     waves = np.zeros((Nsim * 2, channel_idx.shape[0], T))
+    G3 ,cortex = get_data(cortex_data,G3_data)
+    G = gain_orient(G3)
     for i in tqdm(range(Nsim),desc='Synthesizing data'):
-        wave, strt, nn = wave_on_sensor(mat2, params, G)
-        blob = blob_on_sensor(mat2, params, G, strt, nn)
+        wave, strt, nn = wave_on_sensor(cortex, params, G)
+        blob = blob_on_sensor(cortex, params, G, strt, nn)
         noise = generate_brain_noise(G,1000,T,Fs)
         noise_norm = noise/np.linalg.norm(noise)
 
         waves[i] = SNR*(wave/np.linalg.norm(wave)) + noise_norm
         waves[i+Nsim] = SNR*(blob/np.linalg.norm(blob)) + noise_norm
     return waves
+
+
 
 
