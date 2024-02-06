@@ -3,24 +3,11 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
 from tqdm import tqdm
-
 import scipy.sparse as sp
 from scipy.signal import butter, filtfilt
-
-
 import warnings
 
 rng = np.random.default_rng(seed=0) # random Generator with seed
-
-params = {
-    'duration': T / Fs,
-    'sampling_rate': Fs,
-    'nspoints': 51,
-    'speed': 0.8,
-    'draw_paths': False,
-    'draw_wave': False,
-}
-
 Fs = 1e3
 N_comps = 2
 Nhigh = 3
@@ -32,12 +19,20 @@ T = pre_time + post_time + 1
 Nsim = 200
 SNR = 3
 channel_type = 'grad'
+
 if channel_type == 'grad':
     channel_idx = np.setdiff1d(np.arange(0, 305), np.arange(2, 305, 3))
 elif channel_type == 'mag':
     channel_idx = np.arange(2, 305, 3)
 
-
+params = {
+    'duration': T / Fs,
+    'sampling_rate': Fs,
+    'nspoints': 51,
+    'speed': 0.8,
+    'draw_paths': False,
+    'draw_wave': False,
+}
 
 
 def gain_orient(G3, channel_idx):
