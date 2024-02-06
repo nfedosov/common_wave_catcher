@@ -418,15 +418,15 @@ def generate_brain_noise(G, N, T, Fs):
 
     return brain_noise
 
-def generate_wave(G3_data,cortex_data, params=params,Nsim=Nsim):
+def generate_wave(G3_data,cortex_data, params,Nsim):
     warnings.filterwarnings("ignore")
     waves = np.zeros((Nsim * 2, channel_idx.shape[0], T))
     G3 ,cortex = get_data(cortex_data,G3_data)
     G = gain_orient(G3)
     for i in tqdm(range(Nsim),desc='Synthesizing data'):
-        wave, strt, nn = wave_on_sensor(cortex, params, G)
-        blob = blob_on_sensor(cortex, params, G, strt, nn)
-        noise = generate_brain_noise(G,1000,T,Fs)
+        wave, strt, nn = wave_on_sensor(cortex=cortex, params=params, G=G)
+        blob = blob_on_sensor(cortex=cortex, params=params, G=G, strt=strt, nn=nn)
+        noise = generate_brain_noise(G=G,1000,T=T,Fs=Fs)
         noise_norm = noise/np.linalg.norm(noise)
 
         waves[i] = SNR*(wave/np.linalg.norm(wave)) + noise_norm
